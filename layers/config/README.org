@@ -2,31 +2,41 @@
 
 * Description
 
-This layer houses ~dotspacemacs/user-config~ updates and
-~dotspacemacs/additional/packages~. The local package ~org-config~ houses my
-org-mode updates.
+This layer houses configuration updates typically clumped into
+~dotspacemacs/user-config~.
 
-Language specific configuration is hosted in the ~langs~ layer.
+1. Declares all layers, like ~git~ and ~python~.
+2. Declares all non-display packages.
+3. Redo bindings, see next section.
 
-Display updates, theming and my several ~pretty~ packages are hosted in the
-~display~ layer.
+* Redone Spacemacs Bindings
 
-Personal packages not display related are hosted in the ~personal~ layer.
+~redo-spacemacs~ wraps Spacemacs leader re/un-bindings to warn when their
+definitions change, to not get caught by surprise by changes to Spacemacs.
 
-Features are best understood by seeing the utilized packages in
-~config-packages~. The following tables contain all keybindings.
+I undo *many* core spacemacs leader-key prefixes and keybindings that I either
+use via other bindings/means or have not made the cut into my workflow.
+Un-binding is useful to: keep which key options smaller and facilitate changes
+to muscle memory.
 
-* Keybindings
+Redone bindings are disabled by default. Turn on with ~redo-bindings?~ in
+~init.el~.
+
+* Package Bindings
+
+  The following tables identify bindings /not/ tied to the ~redo-spacemacs~
+  package.
+
 ** Evil and Core
 
-| Key Binding | Function               |
-|-------------+------------------------|
-| ~Q~         | config/execute-q-macro |
-| ~H~         | evil-first-non-blank   |
-| ~L~         | evil-end-of-line       |
-| ~0~         | evil-jump-item         |
-| ~s~         | avy-goto-char-timer    |
-| ~C-SPC~     | hippie-expand              |
+| Key Binding | Function             |
+|-------------+----------------------|
+| ~Q~         | evil-execute-q-macro |
+| ~H~         | evil-first-non-blank |
+| ~L~         | evil-end-of-line     |
+| ~0~         | evil-jump-item       |
+| ~s~         | avy-goto-char-timer  |
+| ~_~         | ranger               |
 
 ** Navigation and Windows
 
@@ -34,11 +44,7 @@ Features are best understood by seeing the utilized packages in
 |-------------+----------------------------|
 | ~C-h~       | avy-pop-mark               |
 | ~C-l~       | evil-avy-goto-line         |
-| ~C-e~       | config/shell-pop-eshell    |
-| ~M-d~       | spacemacs/delete-window    |
-| ~M-TAB~     | spacemacs/alternate-buffer |
-| ~M-p~       | neotree-find-project-root  |
-| ~M-f~       | winum-select-window-0      |
+| ~C-e~       | eshell-pop-eshell          |
 
 ** Outlines
 
@@ -54,8 +60,7 @@ Features are best understood by seeing the utilized packages in
 | ~SPC n h~   | outline-promote                  |
 | ~SPC n l~   | outline-demote                   |
 | ~SPC n n~   | outshine-narrow-to-subtree       |
-| ~SPC n w~   | widen                           |
-| ~M-RET~     | outshine-insert-heading          |
+| ~SPC n w~   | widen                            |
 | ~<backtab>~ | outshine-cycle-buffer            |
 
 ** Ivy
@@ -68,7 +73,15 @@ Features are best understood by seeing the utilized packages in
 | ~C-d~       | ivy-scroll-up-command   |
 | ~C-n~       | ivy-restrict-to-matches |
 | ~C-y~       | ivy-yank-word           |
-| ~C-o~       | ivy-occur               |
 | ~C-RET~     | ivy-call                |
 | ~C-SPC~     | ivy-dispatching-done    |
 | ~C-S-SPC~   | ivy-dispatching-call    |
+
+** Ranger
+
+| Key Binding | Function                     |
+|-------------+------------------------------|
+| ~n~         | dired-create-directory       |
+| ~E~         | wdired-change-to-wdired-mode |
+| ~C-j~       | ranger-travel                |
+| ~C-e~       | ranger-pop-eshell            |

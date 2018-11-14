@@ -1,294 +1,139 @@
 ;;; Setup
+;;;; Commentary
 
 ;; -- Eric Kaschalk's Spacemacs Configuration --
 ;; -- Contact: ekaschalk@gmail.com --
 ;; -- MIT License --
-;; -- Emacs 25.3.2 ~ Spacemacs Dev Branch 0.300.0.x ~ pkgs updated: 05/06/18 --
+;; -- Emacs 26.1 ~ Spacemacs Dev Branch 0.300.0.x ~ pkgs updated: 10/09/18 --
 ;; -- http://modernemacs.com --
 ;;
-;; All configuration is housed in personal layers - see README.
-;; `init.el' configures spacemacs, defining required `dotspacemacs/...' functions.
+;; Personal layers host most of my configuration - see README.
+;; Ligatures and icons require installation - see README.
+;;
+;; Layers are declared in `layers/config/layers.el'.
+;;
+;; Configure `redo-bindings?' to true if you - want my aggressive rebindings.
+;; Configure `server?'        to true if you - use emacs as a daemon.
+;;
+;; `init.el' sets spacemacs up, defining required `dotspacemacs/..' funcs & vars.
 
-(defvar ERIC-ONLY? t
-  "If cloning, set to nil, enable non-layer personal configuration.")
+;;;; Constants
 
-(defvar linux? (eq system-type 'gnu/linux)
-  "Are we on a gnu/linux machine?")
+(defvar eric?    (string= "Eric Kaschalk" (user-full-name)) "Am I me?")
+(defvar linux?   (eq system-type 'gnu/linux)     "Are we on a linux machine?")
+(defvar mac?     (eq system-type 'darwin)        "Are we on a macOS machine?")
+(defvar windows? (not (or linux? mac?))          "Are we on a windows machine?")
 
-(defvar desktop? (= 1440 (display-pixel-height))
-  "Am I on my desktop? For determining font size.")
+;;;; Configuration
 
-(defun os-path (path)
-  "Prepend drive label to PATH if on windows machine."
-  (if linux?
-      path
-    (expand-file-name path "c:")))
+(defvar server? (if eric? t nil)
+  "Alias `dotspacemacs-enable-server'. Defaults to nil for non-eric users.")
+
+(defvar redo-bindings? (if eric? t nil)
+  "Redo spacemacs bindings? Defaults to nil for non-eric users.
+
+I aggressively re-bind and un-bind spacemacs defaults.
+
+This indicator:
+1. Removes prefixes/bindings contained within `redo-spacemacs-prefixes-list'.
+2. Removes bindings in `redo-spacemacs-undo-bindings-alist'.
+3. Adds bindings in `redo-spacemacs-new-bindings-alist'.
+
+It is highly recommend to look through the above 3 variables before enabling,
+defined at end of `layers/config/packages.el' in `config/init-redo-spacemacs'.")
 
 ;;; Spacemacs/
+;;;; Spacemacs/init
 
 (defun dotspacemacs/init ()
-  "Instantiate Spacemacs core settings."
-  (dotspacemacs/init/coding)
-  (dotspacemacs/init/display)
-  (dotspacemacs/init/evil)
-  (dotspacemacs/init/keys)
-  (dotspacemacs/init/layouts)
-  (dotspacemacs/init/misc)
-  (dotspacemacs/init/packages)
-  (dotspacemacs/init/startup))
+  "Instantiate Spacemacs core settings.
+
+All `dotspacemacs-' variables with values set different than their defaults.
+
+They are all defined in `~/.emacs.d/core/core-dotspacemacs.el'.
+Check `dotspacemacs/get-variable-string-list' for all vars you can configure."
+  (setq-default
+   ;; Display
+   dotspacemacs-default-font `(,(if (x-list-fonts "Operator Mono")
+                                    "operator mono medium"
+                                  "Source Code Pro")
+                               :size ,(if (= 1440 (display-pixel-height)) 20 18))
+   dotspacemacs-themes       '(solarized-light
+                               zenburn)
+
+   ;; General
+   dotspacemacs-auto-generate-layout-names t
+   dotspacemacs-editing-style              '(vim :variables
+                                                 vim-style-visual-feedback t
+                                                 vim-style-remap-Y-to-y$ t)
+   dotspacemacs-elpa-https                 nil
+   dotspacemacs-elpa-subdirectory          nil
+   dotspacemacs-enable-server              server?
+   dotspacemacs-fullscreen-at-startup      t
+   dotspacemacs-large-file-size            5
+   dotspacemacs-persistent-server          server?
+   dotspacemacs-pretty-docs                t
+   dotspacemacs-search-tools               '("ag" "rg" "pt" "ack" "grep")
+   dotspacemacs-scratch-mode               'org-mode
+   dotspacemacs-startup-lists              nil
+   dotspacemacs-whitespace-cleanup         'trailing
+
+   ;; The following are unchanged but are still required for reloading via
+   ;; 'SPC f e R' `dotspacemacs/sync-configuration-layers' to not throw warnings
+   dotspacemacs-emacs-leader-key  "M-m"
+   dotspacemacs-emacs-command-key "SPC"
+   dotspacemacs-leader-key        "SPC"
+   dotspacemacs-mode-line-theme   'all-the-icons))
+
+;;;; Spacemacs/layers
 
 (defun dotspacemacs/layers ()
   "Instantiate Spacemacs layers declarations and package configurations."
-  (dotspacemacs/layers/config)
-  (dotspacemacs/layers/packages))
+  (setq-default
+   dotspacemacs-configuration-layers     '((macros   :location local)
+                                           (config   :location local)
+                                           (display  :location local)
+                                           (personal :location local))
+   dotspacemacs-configuration-layer-path '("~/.spacemacs.d/layers/")
+   dotspacemacs-additional-packages      '()
+   dotspacemacs-frozen-packages          '()
+   dotspacemacs-excluded-packages
+   '(;; Must Exclude (for styling, functionality, bug-fixing reasons)
+     fringe importmagic scss-mode vi-tilde-fringe
+
+     ;; Packages I don't use (non-exhaustive)
+     anzu centered-cursor-mode column-enforce-mode company-statistics
+     doom-modeline eshell-prompt-extras evil-anzu evil-mc evil-tutor
+     fancy-battery fill-column-indicator gnuplot golden-ratio indent-guide
+     live-py-mode multi-term multiple-cursors mwim neotree paradox py-isort
+     yapfify)))
+
+;;;; Spacemacs/user-init
 
 (defun dotspacemacs/user-init ()
   "Package independent settings to run before `dotspacemacs/user-config'."
-  (setq custom-file "./elisp/.custom-settings.el"))
+  (fringe-mode 0)
+  (setq custom-file "~/.spacemacs.d/.custom-settings.el"))
+
+;;;; Spacemacs/user-config
+;;;;; Post Layer Load
+
+(defun dotspacemacs/user-config/post-layer-load-config ()
+  "Configuration to take place *after all* layers/pkgs are instantiated."
+  (when (configuration-layer/package-used-p 'redo-spacemacs)
+    (redo-spacemacs-bindings))
+
+  ;; While toggling with `toggle-frame-fullscreen' works, I could not get
+  ;; it to work as a hook attached to the frame-make or window-setup.
+  ;; Depending on your OS, you may need a different/not-at-all need this.
+  (when (and mac? server?)
+    (add-to-list 'default-frame-alist '(fullscreen . fullboth))))
+
+;;;;; Core
 
 (defun dotspacemacs/user-config ()
   "Configuration that cannot be delegated to layers."
-  (dotspacemacs/user-config/toggles)
-  (dotspacemacs/user-config/eric-only)
-  (dotspacemacs/user-config/experiments))
+  (dotspacemacs/user-config/post-layer-load-config)
 
-;;; Spacemacs/Layers
-;;;; Local
-
-(defvar dotspacemacs/layers/local
-  '((macros :location local)    ; All local layers depend on this layer
-
-    (config :location local)    ; Org, Avy, Evil, Misc... config
-    (display :location local)   ; Pretty-eshell/code/outlines... pkgs
-    (langs :location local)     ; Language config
-    (personal :location local))  ; Personal pkgs
-
-  "Local layers housed in `~/.spacemacs.d/layers'.")
-
-;;;; Core
-
-(defvar dotspacemacs/layers/core
-  '(better-defaults
-    git
-    syntax-checking
-
-    (auto-completion :variables
-                     auto-completion-return-key-behavior 'complete
-                     auto-completion-tab-key-behavior 'complete
-                     auto-completion-enable-snippets-in-popup t)
-    (ivy :variables
-         ivy-extra-directories nil)
-    (org :variables
-         org-want-todo-bindings t)
-    (shell :variables
-           shell-default-shell 'eshell)
-    (version-control :variables
-                     version-control-global-margin t
-                     version-control-diff-tool 'git-gutter+))
-
-  "Layers I consider core to Spacemacs.")
-
-;;;; Langs
-
-(defvar dotspacemacs/layers/langs
-  '(;; Markups
-    csv
-    html
-    markdown
-    yaml
-
-    ;; Languages
-    c-c++
-    emacs-lisp
-    hy
-    javascript
-    rust
-
-    (clojure :variables
-             clojure-enable-fancify-symbols t)
-    (haskell :variables
-             haskell-completion-backend 'intero)
-    (python :variables
-            python-sort-imports-on-save t
-            python-test-runner 'pytest
-            :packages
-            (not importmagic)))  ; Broken? Don't need it.
-
-  "Programming and markup language layers.")
-
-;;;; Extra
-
-(defvar dotspacemacs/layers/extra
-  '(gnus
-    graphviz
-    pdf-tools
-    ranger
-
-    (ibuffer :variables
-             ibuffer-group-buffers-by 'projects))
-
-  "Miscellaneous layers.")
-
-;;;; Layers/config
-
-(defun dotspacemacs/layers/config ()
-  (setq-default
-   dotspacemacs-ask-for-lazy-installation t
-   dotspacemacs-configuration-layer-path `(,(os-path "~/.spacemacs.d/layers/"))
-   dotspacemacs-configuration-layers `(,@dotspacemacs/layers/local
-                                       ,@dotspacemacs/layers/core
-                                       ,@dotspacemacs/layers/langs
-                                       ,@dotspacemacs/layers/extra))
-   dotspacemacs-distribution 'spacemacs
-   dotspacemacs-enable-lazy-installation 'unused)
-
-;;;; Layers/packages
-
-(defun dotspacemacs/layers/packages ()
-  (setq-default
-   dotspacemacs-additional-packages '(solarized-theme
-                                      nord-theme
-                                      faceup)
-   dotspacemacs-excluded-packages '(fringe
-                                    importmagic)
-   dotspacemacs-frozen-packages '()
-   dotspacemacs-install-packages 'used-but-keep-unused))
-
-;;; Spacemacs/Init
-;;;; Coding
-
-(defun dotspacemacs/init/coding ()
-  (setq-default
-   dotspacemacs-folding-method 'evil
-   dotspacemacs-highlight-delimiters 'all
-   dotspacemacs-line-numbers nil
-   dotspacemacs-smartparens-strict-mode nil
-   dotspacemacs-smart-closing-parenthesis nil
-   dotspacemacs-search-tools '("ag" "rg" "pt" "ack" "grep")
-   dotspacemacs-smooth-scrolling t
-   dotspacemacs-whitespace-cleanup 'trailing))
-
-;;;; Display
-
-(defun dotspacemacs/init/display ()
-  (setq-default
-   dotspacemacs-themes '(zenburn
-                         solarized-light)
-   dotspacemacs-default-font `("operator mono medium"  ; Note: Bought this font
-                               :size ,(cond ((not linux?) 12)
-                                            (desktop? 20)
-                                            (t 34))
-                               :powerline-scale 1.5)
-
-   dotspacemacs-fullscreen-at-startup (if linux? nil t)
-   dotspacemacs-fullscreen-use-non-native nil
-   dotspacemacs-maximized-at-startup nil
-   dotspacemacs-active-transparency 90
-   dotspacemacs-inactive-transparency 90
-   dotspacemacs-mode-line-unicode-symbols t
-   dotspacemacs-zone-out-when-idle nil
-   dotspacemacs-frame-title-format "%I@%S"
-   dotspacemacs-icon-title-format nil
-   dotspacemacs-pretty-docs t))
-
-;;;; Evil
-
-(defun dotspacemacs/init/evil ()
-  (setq-default
-   dotspacemacs-editing-style 'vim
-   dotspacemacs-colorize-cursor-according-to-state t
-   dotspacemacs-remap-Y-to-y$ t
-   dotspacemacs-retain-visual-state-on-shift t
-   dotspacemacs-visual-line-move-text nil
-   dotspacemacs-ex-substitute-global nil
-   dotspacemacs-enable-paste-transient-state nil
-   dotspacemacs-show-transient-state-title t
-   dotspacemacs-show-transient-state-color-guide t))
-
-;;;; Keys
-
-(defun dotspacemacs/init/keys ()
-  (setq-default
-   dotspacemacs-leader-key "SPC"
-   dotspacemacs-emacs-command-key "SPC"
-   dotspacemacs-ex-command-key ":"
-   dotspacemacs-emacs-leader-key "M-m"
-   dotspacemacs-major-mode-leader-key ","
-   dotspacemacs-major-mode-emacs-leader-key "C-M-m"
-   dotspacemacs-which-key-delay 0.4
-   dotspacemacs-which-key-position 'bottom
-   dotspacemacs-distinguish-gui-tab nil))
-
-;;;; Layouts
-
-(defun dotspacemacs/init/layouts ()
-  (setq-default
-   dotspacemacs-scratch-mode 'org-mode
-   dotspacemacs-default-layout-name "Default"
-   dotspacemacs-display-default-layout nil
-   dotspacemacs-auto-resume-layouts nil
-   dotspacemacs-auto-generate-layout-names t
-   dotspacemacs-switch-to-buffer-prefers-purpose nil))
-
-;;;; Misc
-
-(defun dotspacemacs/init/misc ()
-  (setq-default
-   dotspacemacs-large-file-size 5
-   dotspacemacs-auto-save-file-location 'cache
-   dotspacemacs-max-rollback-slots 5
-   dotspacemacs-persistent-server nil
-   dotspacemacs-helm-resize nil
-   dotspacemacs-helm-no-header nil
-   dotspacemacs-helm-position 'bottom))
-
-;;;; Packages
-
-(defun dotspacemacs/init/packages ()
-  (setq-default
-   dotspacemacs-default-package-repository nil
-   dotspacemacs-elpa-https t
-   dotspacemacs-elpa-timeout 5
-   dotspacemacs-check-for-update nil
-   dotspacemacs-elpa-subdirectory nil))
-
-;;;; Startup
-
-(defun dotspacemacs/init/startup ()
-  (setq-default
-   dotspacemacs-verbose-loading nil
-   dotspacemacs-startup-banner 'official
-   dotspacemacs-startup-lists '()
-   dotspacemacs-startup-buffer-responsive t
-   dotspacemacs-loading-progress-bar t))
-
-;;; Spacemacs/User-Config
-;;;; Toggles
-
-(defun dotspacemacs/user-config/toggles ()
-  "Spacemacs toggles not intended to be put into layers."
-  (spacemacs/toggle-highlight-long-lines-globally-on)
-  (spacemacs/toggle-mode-line-minor-modes-off)
-  (spacemacs/toggle-aggressive-indent-globally-on)
-  (global-highlight-parentheses-mode 1)
-  (rainbow-delimiters-mode-enable)
-  (fringe-mode '(0 . 8)))
-
-;;;; Eric Only
-
-(defun dotspacemacs/user-config/eric-only ()
-  "Personal configuration updates and experiments."
-  (when ERIC-ONLY?
-    (setq find-function-C-source-directory "~/dev/emacs-dev/src")
-
-    (load-file (os-path "~/dev/hy-mode/hy-mode.el"))
-    (load-file (os-path "~/dev/hy-mode/hy-personal.el"))
-    (require 'hy-mode)
-    (require 'hy-personal)))
-
-;;;; Experiments
-
-(defun dotspacemacs/user-config/experiments ()
-  "Space for trying out configuration updates."
-  ;; Nothing atm
+  ;; Drop-in more config here without needing layer stuff
   )
