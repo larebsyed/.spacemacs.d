@@ -1,25 +1,154 @@
 ;;; Display Layer
 
 (setq display-packages
-      '(
-        ;; Owned packages
+      '(;; Owned packages
         all-the-icons
         all-the-icons-ivy
         all-the-icons-dired
         pretty-mode
-        spaceline-all-the-icons
+        solarized-theme
         (prettify-utils :location (recipe :fetcher github
                                           :repo "Ilazki/prettify-utils.el"))
 
+        ;; Elsehwere-owned packages
+        spaceline-all-the-icons
+        which-key
+
         ;; Personal display-related packages
-        (pretty-code :location local)
-        (pretty-eshell :location local)
-        (pretty-fonts :location local)
-        (pretty-magit :location local)
+        (pretty-code     :location local)
+        (pretty-eshell   :location local)
+        (pretty-fonts    :location local)
+        (pretty-magit    :location local)
         (pretty-outlines :location local)
         ))
 
-;;; Locals
+
+;;; Owned Packages
+;;;; All-the-icons
+
+(defun display/init-all-the-icons ()
+  (use-package all-the-icons
+    :config (progn
+              (add-to-list 'all-the-icons-icon-alist
+                           '("\\.hy$"
+                             all-the-icons-fileicon "lisp"
+                             :face all-the-icons-orange))
+              (add-to-list 'all-the-icons-icon-alist
+                           '("\\.dot$"
+                             all-the-icons-fileicon "graphviz"
+                             :face all-the-icons-pink))
+              (add-to-list 'all-the-icons-mode-icon-alist
+                           '(hy-mode
+                             all-the-icons-fileicon "lisp"
+                             :face all-the-icons-orange))
+              (add-to-list 'all-the-icons-mode-icon-alist
+                           '(graphviz-dot-mode
+                             all-the-icons-fileicon "graphviz"
+                             :face all-the-icons-pink)))))
+
+;;;; All-the-icons-ivy
+
+(defun display/init-all-the-icons-ivy ()
+  (defun all-the-icons-ivy-file-transformer-stdized (s)
+    "Fix `all-the-icons-ivy-file-transformer' to have stdized height/offset."
+    (format "%s\t%s"
+            (propertize "\t" 'display
+                        (all-the-icons-icon-for-file s :height 0.9 :v-adjust 0))
+            s))
+
+  (use-package all-the-icons-ivy
+    :after all-the-icons
+
+    :config (progn
+              ;; I have no idea why the default behavior for this pkg
+              ;; doesn't standardize the vertical offset and height
+              (advice-add 'all-the-icons-ivy-file-transformer :override
+                          'all-the-icons-ivy-file-transformer-stdized)
+
+              ;; Counsel defines a particular file transformer for just
+              ;; projectile (works on virtual files). Lets tack on the
+              ;; all-the-icons-ivy transformer for projectile icons once-again.
+              (advice-add 'counsel-projectile-find-file-transformer :filter-return
+                          'all-the-icons-ivy-file-transformer-stdized)
+              (advice-add 'counsel-projectile-transformer :filter-return
+                          'all-the-icons-ivy-file-transformer-stdized)
+
+              (all-the-icons-ivy-setup))))
+
+;;;; All-the-icons-dired
+
+(defun display/init-all-the-icons-dired ()
+  (use-package all-the-icons-dired
+    :config (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)))
+
+;;;; Pretty-mode
+
+(defun display/init-pretty-mode ()
+  (use-package pretty-mode
+    :config (progn
+              ;; I *only* use greek letter replacements at the moment
+              (global-pretty-mode t)
+
+              (pretty-deactivate-groups
+               '(:equality :ordering :ordering-double :ordering-triple
+                           :arrows :arrows-twoheaded :punctuation
+                           :logic :sets
+
+                           ;; This is the only one I go back and forth on
+                           ;; It uses the empty-set for nil, None, etc.
+                           ;; :nil
+                           ))
+              (pretty-activate-groups
+               '(:greek)))))
+
+;;;; Prettify-utils
+
+(defun display/init-prettify-utils ()
+  (use-package prettify-utils))
+
+;;;; Solarized-theme
+
+(defun display/init-solarized-theme ()
+  (use-package solarized-theme))
+
+;;; Unowned Packages
+;;;; Which-key
+
+(defun display/post-init-which-key ()
+  (when (configuration-layer/package-used-p 'pretty-fonts)
+    (setq which-key-separator " ")
+    (setq which-key-prefix-prefix " ")))
+
+;;;; Spaceline-all-the-icons
+
+(defun display/post-init-spaceline-all-the-icons ()
+  (spaceline-all-the-icons-theme)
+
+  (setq spaceline-highlight-face-func 'spaceline-highlight-face-default)
+
+  (setq spaceline-all-the-icons-icon-set-modified         'chain)
+  (setq spaceline-all-the-icons-icon-set-window-numbering 'square)
+  (setq spaceline-all-the-icons-separator-type            'none)
+  (setq spaceline-all-the-icons-primary-separator         "")
+
+  ;; Mode Segments
+  (spaceline-toggle-all-the-icons-minor-modes-off)
+
+  ;; Buffer Segments
+  (spaceline-toggle-all-the-icons-buffer-size-off)
+  (spaceline-toggle-all-the-icons-buffer-position-off)
+
+  ;; Git Segments
+  (spaceline-toggle-all-the-icons-git-status-off)
+  (spaceline-toggle-all-the-icons-vc-icon-off)
+  (spaceline-toggle-all-the-icons-vc-status-off)
+
+  ;; Misc Segments
+  (spaceline-toggle-all-the-icons-eyebrowse-workspace-off)
+  (spaceline-toggle-all-the-icons-flycheck-status-off)
+  (spaceline-toggle-all-the-icons-time-off))
+
+;;; Pretty Packages
 ;;;; Pretty-code
 
 (defun display/init-pretty-code ()
@@ -45,19 +174,28 @@
     :after macros
 
     :config (progn
+              ;; Change default banner message
+              (setq eshell-banner-message
+                    (s-concat (s-repeat 20 "---") "\n" (s-repeat 20 "---")))
+
+              ;; More prompt styling
+              (setq pretty-eshell-header "\n︳")
+              (setq pretty-eshell-prompt-string " ")
+
+              ;; ~ Sections ~
               ;; Directory
               (pretty-eshell-section
                esh-dir
                "\xf07c"  ; 
                (abbreviate-file-name (eshell/pwd))
-               '(:foreground "gold" :bold ultra-bold :underline t))
+               '(:foreground "#268bd2" :bold bold :underline t))
 
               ;; Git Branch
               (pretty-eshell-section
                esh-git
                "\xe907"  ; 
                (magit-get-current-branch)
-               '(:foreground "pink"))
+               '(:foreground "#8D6B94"))
 
               ;; Python Virtual Environment
               (pretty-eshell-section
@@ -86,37 +224,33 @@
 
 (defun display/init-pretty-fonts ()
   (use-package pretty-fonts
-    :config (progn
-              (setq pretty-fonts-hy-font '(("\\(self\\)" ?⊙)))
+    :config
+    ;; This is required to avoid segfault when using emacs as daemon
+    (spacemacs|do-after-display-system-init
+     (set-fontset-font t '(#Xe100 . #Xe16f) "Fira Code Symbol")
+     (pretty-fonts-set-kwds '((pretty-fonts-fira-font
+                               prog-mode-hook
+                               org-mode-hook)))
 
-              (pretty-fonts-set-kwds
-               '(;; Fira Code Ligatures
-                 (pretty-fonts-fira-font prog-mode-hook org-mode-hook)
+     (pretty-fonts-set-fontsets
+      '(;; All-the-icons fontsets
+        ("fontawesome"
+         ;;                         
+         #xf07c #xf0c9 #xf0c4 #xf0cb #xf017 #xf101)
 
-                 ;; Other ligatures that are easier to define as simple
-                 ;; regexes so as to avoid `prettify-symbols-compose-predicate'
-                 (pretty-fonts-hy-font hy-mode-hook)))
+        ("all-the-icons"
+         ;;    
+         #xe907 #xe928)
 
-              (pretty-fonts-set-fontsets
-               '(
-                 ;; All-the-icons fontsets
-                 ("fontawesome"
-                  ;;                         
-                  #xf07c #xf0c9 #xf0c4 #xf0cb #xf017 #xf101)
+        ("github-octicons"
+         ;;                               
+         #xf091 #xf059 #xf076 #xf075 #xe192  #xf016 #xf071)
 
-                 ("all-the-icons"
-                  ;;    
-                  #xe907 #xe928)
-
-                 ("github-octicons"
-                  ;;                          
-                  #xf091 #xf059 #xf076 #xf075 #xe192  #xf016)
-
-                 ("material icons"
-                  ;;        
-                  #xe871 #xe918 #xe3e7
-                  ;;              
-                  #xe3d0 #xe3d1 #xe3d2 #xe3d4))))))
+        ("material icons"
+         ;;              
+         #xe871 #xe918 #xe3e7  #xe5da
+         ;;              
+         #xe3d0 #xe3d1 #xe3d2 #xe3d4))))))
 
 ;;;; Pretty-magit
 
@@ -168,104 +302,3 @@
                                       '(emacs-lisp-mode-hook
                                         hy-mode-hook
                                         python-mode-hook)))))
-
-;;; Core Packages
-;;;; All-the-icons
-
-(defun display/init-all-the-icons ()
-  (use-package all-the-icons
-    :config (progn
-              (add-to-list 'all-the-icons-icon-alist
-                           '("\\.hy$"
-                             all-the-icons-fileicon "lisp"
-                             :face all-the-icons-orange))
-              (add-to-list 'all-the-icons-icon-alist
-                           '("\\.dot$"
-                             all-the-icons-fileicon "graphviz"
-                             :face all-the-icons-pink))
-              (add-to-list 'all-the-icons-mode-icon-alist
-                           '(hy-mode
-                             all-the-icons-fileicon "lisp"
-                             :face all-the-icons-orange))
-              (add-to-list 'all-the-icons-mode-icon-alist
-                           '(graphviz-dot-mode
-                             all-the-icons-fileicon "graphviz"
-                             :face all-the-icons-pink)))))
-
-;;;; All-the-icons-ivy
-
-(defun display/init-all-the-icons-ivy ()
-  (defun all-the-icons-ivy-file-transformer-stdized (s)
-    "Fix `all-the-icons-ivy-file-transformer' to have stdized height/offset."
-    (format "%s\t%s"
-            (propertize "\t" 'display
-                        (all-the-icons-icon-for-file s :height 1 :v-adjust 0))
-            s))
-
-  (use-package all-the-icons-ivy
-    :after all-the-icons
-
-    :config (progn
-              ;; I have no idea why the default behavior for this pkg
-              ;; doesn't standardize the vertical offset and height
-              (advice-add 'all-the-icons-ivy-file-transformer :override
-                          'all-the-icons-ivy-file-transformer-stdized)
-
-              ;; Counsel defines a particular file transformer for just
-              ;; projectile (works on virtual files). Lets tack on the
-              ;; all-the-icons-ivy transformer for projectile icons once-again.
-              (advice-add 'counsel-projectile-find-file-transformer :filter-return
-                          'all-the-icons-ivy-file-transformer-stdized)
-
-              (all-the-icons-ivy-setup))))
-
-;;;; All-the-icons-dired
-
-(defun display/init-all-the-icons-dired ()
-  (use-package all-the-icons-dired
-    :config (add-hook 'dired-mode-hook 'all-the-icons-dired-mode)))
-
-;;;; Pretty-mode
-
-(defun display/init-pretty-mode ()
-  (use-package pretty-mode
-    :config (progn
-              (global-pretty-mode t)
-
-              (pretty-deactivate-groups
-               '(:equality :ordering :ordering-double :ordering-triple
-                           :arrows :arrows-twoheaded :punctuation
-                           :logic :sets))
-              (pretty-activate-groups
-               '(:greek :arithmetic-nary)))))
-
-;;;; Prettify-utils
-
-(defun display/init-prettify-utils ()
-  (use-package prettify-utils))
-
-;;;; Spaceline-all-the-icons
-
-(defun display/post-init-spaceline-all-the-icons ()
-  (spaceline-all-the-icons-theme)
-
-  (setq spaceline-highlight-face-func 'spaceline-highlight-face-default)
-
-  (setq spaceline-all-the-icons-icon-set-modified         'chain)
-  (setq spaceline-all-the-icons-icon-set-window-numbering 'square)
-  (setq spaceline-all-the-icons-separator-type            'none)
-  (setq spaceline-all-the-icons-primary-separator         "")
-
-  ;; Buffer Segments
-  (spaceline-toggle-all-the-icons-buffer-size-off)
-  (spaceline-toggle-all-the-icons-buffer-position-off)
-
-  ;; Git Segments
-  (spaceline-toggle-all-the-icons-git-status-off)
-  (spaceline-toggle-all-the-icons-vc-icon-off)
-  (spaceline-toggle-all-the-icons-vc-status-off)
-
-  ;; Misc Segments
-  (spaceline-toggle-all-the-icons-eyebrowse-workspace-off)
-  (spaceline-toggle-all-the-icons-flycheck-status-off)
-  (spaceline-toggle-all-the-icons-time-off))
