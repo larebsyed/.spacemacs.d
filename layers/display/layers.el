@@ -1,8 +1,5 @@
-(configuration-layer/declare-layers
- '(;; Common
-   config
-   macros
+;;; -*- lexical-binding: t; -*-
 
-   ;; Extra
-   theming  ; Required for `config.el' theming modifications
+(configuration-layer/declare-layers
+ '(theming  ; Required for `config.el' theming modifications
    ))

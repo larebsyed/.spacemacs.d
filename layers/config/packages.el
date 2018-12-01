@@ -1,4 +1,4 @@
-;;; Config Layer
+;;; Config Layer -*- lexical-binding: t; -*-
 
 (setq config-packages
       '(;; Unowned Packages
@@ -8,14 +8,15 @@
         evil
         ivy
         magit
-        mu4e
         ob org org-bullets
         ranger
 
         ;; Owned Packages
         auto-dim-other-buffers
+        dash-functional
         faceup
         outshine  ; also configures `outline-mode'
+        s
 
         ;; Local Packages
         (redo-spacemacs :location local)))
@@ -40,14 +41,6 @@
 ;;;; Eshell
 
 (defun config/pre-init-eshell ()
-  (defun eshell-pop-eshell ()
-    "Eshell popup straight to insert mode."
-    (interactive)
-    (spacemacs/shell-pop-eshell nil)
-    (if (string= major-mode "eshell-mode")
-        (evil-insert 1)
-      (evil-escape)))
-
   (spacemacs|use-package-add-hook eshell
     :post-init
     (evil-define-key '(normal insert) 'global (kbd "C-e") 'eshell-pop-eshell)))
@@ -55,20 +48,6 @@
 ;;;; Evil
 
 (defun config/post-init-evil ()
-  (defun evil-execute-q-macro ()
-    "Execute macro stores in q-register, ie. run `@q'."
-    (interactive)
-    (evil-execute-macro 1 "@q"))
-
-  (defun evil-scroll-to-center-advice (&rest args)
-    "Scroll line to center, for advising functions."
-    (evil-scroll-line-to-center (line-number-at-pos)))
-
-  (defun evil-end-of-line-interactive ()
-    "Wrap `evil-end-of-line' in interactive, fix point being 1+ in vis state."
-    (interactive)
-    (evil-end-of-line))
-
   (setq evil-escape-key-sequence "jk")
   (setq evil-escape-unordered-key-sequence "true")
 
@@ -111,48 +90,6 @@
              ("M-3" . winum-select-window-3)
              ("M-4" . winum-select-window-4)))
 
-;;;; Mu4e
-
-(defun config/post-init-mu4e ()
-  ;; message.el
-  (setq message-directory "~/mail")
-  (setq message-send-mail-function 'smtpmail-send-it)
-
-  ;; smptmail.el
-  (setq smtpmail-smtp-server "smtp.gmail.com")
-  (setq smtpmail-smtp-service 587)
-  (setq smtpmail-default-smtp-server "smtp.gmail.com")
-  (setq smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil)))
-  (setq smtpmail-auth-credentials '(("smtp.gmail.com" 587
-                                     "ekaschalk@gmail.com" nil)))
-
-  ;; mu4e
-  ;; solid
-  (setq mu4e-get-mail-command "offlineimap")
-  (setq mu4e-maildir "~/mail")
-  (setq mu4e-sent-messages-behavior 'delete)
-  (setq user-mail-address "ekaschalk@gmail.com")
-  (setq mu4e-user-mail-address-list (list user-mail-address))
-
-  ;; experiment
-  (setq mu4e-drafts-folder "/[Gmail].Drafts")
-  (setq mu4e-sent-folder   "/[Gmail].Sent Mail")
-  (setq mu4e-maildir-shortcuts '(("/INBOX"               . ?i)
-                                 ("/[Gmail].Sent Mail"   . ?s)))
-
-  ;; mu4e-vars.el go through this
-
-  (setq mu4e-hide-index-messages t)
-  ;; mu4e-use-fancy-chars  ; true by default
-  ;; mu4e-marks            ; all the unicode stuff setup here
-  ;; configure through `mu4e-headers-..-mark' and `mu4e-headers..-prefix'
-  ;; mu4e-enable-async-operations
-  ;; (setq mu4e-update-interval 600)
-  ;; (setq mu4e-index-cleanup nil)      ;; don't do a full cleanup check
-  ;; (setq mu4e-index-lazy-check t)    ;; don't consider up-to-date dir
-  ;; w3m -dump -T text/html
-  )
-
 ;;;; Org
 
 (defun config/pre-init-org-bullets ()
@@ -169,8 +106,6 @@
     :post-config (add-to-list 'org-babel-load-languages '(dot . t))))
 
 (defun config/pre-init-org ()
-  (spacemacs/set-leader-keys "aof" 'org-open-at-point-global)
-
   (setq org-ellipsis "")
   (setq org-priority-faces
         '((65 :inherit org-priority :foreground "red")
@@ -189,10 +124,6 @@
   (add-hook 'org-mode-hook 'flyspell-mode))
 
 (defun config/post-init-org ()
-  (defun org-sort-entries-priorities ()
-    (interactive)
-    (org-sort-entries nil ?p))
-
   (evil-define-key '(normal visual motion) org-mode-map
     "gh" 'outline-up-heading
     "gj" 'outline-forward-same-level
@@ -200,10 +131,10 @@
     "gl" 'outline-next-visible-heading
     "gu" 'outline-previous-visible-heading)
 
+  (spacemacs/set-leader-keys "aof" 'org-open-at-point-global)
   (spacemacs/set-leader-keys-for-major-mode 'org-mode
     "r" 'org-refile
-    "s p" 'org-sort-entries-priorities)
-  (org-defkey org-mode-map [(meta return)] 'org-meta-return))
+    "s p" 'org-sort-entries-priorities))
 
 ;;;; Ranger
 
@@ -234,20 +165,31 @@
     :config
     (auto-dim-other-buffers-mode)))
 
+;;;; Dash functional
+
+(defun config/init-dash-functional ()
+  ;; The spacemacs core file `core-documentation' requires dash.
+  ;; So we only have to use-pkg dash-functional to have all of dash around.
+  (use-package dash-functional))
+
 ;;;; Faceup
 
 (defun config/init-faceup ()
-  (use-package faceup))
+  (use-package faceup
+    :defer t))
 
 ;;;; Outshine
 
 (defun config/init-outshine ()
-  (defun advise-outshine-narrow-start-pos ()
-    "Narrowing works within the headline rather than requiring to be on it."
-    (unless (outline-on-heading-p t)
-      (outline-previous-visible-heading 1)))
-
   (use-package outshine
+    :hook ((prog-mode          . outline-minor-mode)
+           (outline-minor-mode . outshine-hook-function))
+
+    :bind (("<backtab>"     . outshine-cycle-buffer)
+           ([(meta return)]       . outshine-insert-heading)
+           ([(meta shift return)] . outshine-insert-subheading)
+           :map outline-minor-mode-map)
+
     :init
     (progn
       (evil-define-key '(normal visual motion) outline-minor-mode-map
@@ -257,8 +199,6 @@
         "gl" 'outline-next-visible-heading
         "gu" 'outline-previous-visible-heading)
 
-      (bind-key "<backtab>" 'outshine-cycle-buffer outline-minor-mode-map)
-
       (spacemacs/set-leader-keys
         "nn" 'outshine-narrow-to-subtree
         "nw" 'widen
@@ -267,13 +207,31 @@
         "nh" 'outline-promote
         "nl" 'outline-demote)
 
-      (add-hook 'prog-mode-hook          'outline-minor-mode)
-      (add-hook 'outline-minor-mode-hook 'outshine-hook-function)
+      (advice-add 'outshine-narrow-to-subtree :before 'outshine-fix-narrow-pos)
 
-      (advice-add 'outshine-narrow-to-subtree :before
-                  'advise-outshine-narrow-start-pos))))
+      (advice-add 'outshine-insert-heading    :before 'outshine-fix-insert-pos)
+      (advice-add 'outshine-insert-heading    :after 'evil-insert-advice)
+      (advice-add 'outshine-insert-subheading :after 'evil-insert-advice)
 
-;;; Redo-spacemacs
+      ;; Fix the new bindings in outline-minor-mode overwriting org-mode-map
+      ;; I also add advice here because it mirrors outshine modifications
+      (spacemacs|use-package-add-hook org
+        :post-config
+        (progn
+          (bind-keys :map org-mode-map
+                     ([(meta return)]       . org-meta-return)
+                     ([(meta shift return)] . org-insert-subheading))
+          (advice-add 'org-insert-heading    :before 'org-fix-heading-pos)
+          (advice-add 'org-insert-heading    :after 'evil-insert-advice)
+          (advice-add 'org-insert-subheading :after 'evil-insert-advice))))))
+
+;;;; Strings
+
+(defun config/init-s ()
+  (use-package s))
+
+;;; Local Packages
+;;;; Redo-spacemacs
 
 ;; `redo-spacemacs-bindings' is executed in user-config in `init.el'
 ;; with the `dotspacemacs/user-config/post-layer-load-config' function
@@ -286,7 +244,6 @@
 (defun config/init-redo-spacemacs ()
   (use-package redo-spacemacs
     :if redo-bindings?
-    :after dash dash-functional
     :init
     (progn
       (setq redo-spacemacs-prefixes-list
@@ -448,6 +405,7 @@
               ("w3" spacemacs/window-split-triple-columns)
               ("w_" spacemacs/maximize-horizontally)
               ("wC" spacemacs/toggle-centered-buffer-mode-frame)
+              ("wc" spacemacs/toggle-centered-buffer-mode)
               ("wF" make-frame)
               ("wh" evil-window-left)
               ("wj" evil-window-down)
@@ -496,6 +454,7 @@
             '(;; Windows, Layouts Management
               ("M-w"   spacemacs/toggle-maximize-buffer)
               ("M-d"   spacemacs/delete-window)
+              ("M-c"   spacemacs/toggle-centered-buffer-mode)
               ("M-/"   split-window-right)
               ("C-M-/" split-window-right-and-focus)
               ("M--"   split-window-below)

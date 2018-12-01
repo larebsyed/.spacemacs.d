@@ -1,8 +1,7 @@
-(configuration-layer/declare-layers
- '(;; Common
-   macros
+;;; -*- lexical-binding: t; -*-
 
-   ;; Core
+(configuration-layer/declare-layers
+ '(;; Core
    (auto-completion :variables
                     auto-completion-return-key-behavior 'complete
                     auto-completion-tab-key-behavior 'complete
@@ -37,7 +36,7 @@
    clojure
    emacs-lisp
    haskell
-   hy
+   hy  ; I wrote this mode/layer, yay
    (python :variables
            python-test-runner 'pytest
            python-spacemacs-indent-guess nil)
