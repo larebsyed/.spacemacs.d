@@ -15,7 +15,6 @@
         auto-dim-other-buffers
         dash-functional
         faceup
-        hierarchy
         outshine  ; also configures `outline-mode'
         s
 
@@ -187,12 +186,6 @@
   (use-package faceup
     :defer t))
 
-;;;; Hierarchy
-
-(defun config/init-hierarchy ()
-  (use-package hierarchy
-    :defer t))
-
 ;;;; Outshine
 
 (defun config/init-outshine ()
@@ -258,7 +251,7 @@
 
 (defun config/init-redo-spacemacs ()
   (use-package redo-spacemacs
-    :if redo-bindings?
+    :if (and (boundp 'redo-bindings?) redo-bindings?)
     :init
     (progn
       (setq redo-spacemacs-prefixes-list
