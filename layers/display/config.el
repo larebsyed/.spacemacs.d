@@ -120,16 +120,16 @@
 
 (setq display/solarized-light-theming
       `(;; Overwrites
-        (mode-line-inactive :background "#eee8d5"
-                            ,@(alist-get 'mode-line-inactive
-                                         display/mode-line))
+        ;; (mode-line-inactive :background "#eee8d5"
+        ;;                     ,@(alist-get 'mode-line-inactive
+        ;;                                  display/mode-line))
 
-        (font-lock-comment-face :foreground "#586e75"
-                                ,@(alist-get 'font-lock-comment-face
-                                             display/font-locks))
-        (font-lock-doc-face :foreground "#2aa198"
-                            ,@(alist-get 'font-lock-doc-face
-                                         display/font-locks))
+        ;; (font-lock-comment-face :foreground "#586e75"
+        ;;                         ,@(alist-get 'font-lock-comment-face
+        ;;                                      display/font-locks))
+        ;; (font-lock-doc-face :foreground "#2aa198"
+        ;;                     ,@(alist-get 'font-lock-doc-face
+        ;;                                  display/font-locks))
 
         ;; Extra
         (sp-show-pair-match-face :background  "CadetBlue3")

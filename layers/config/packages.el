@@ -6,10 +6,10 @@
         avy
         eshell
         evil
-        ivy
+        ;; ivy
         magit
         ob org org-bullets
-        ranger
+        ;; ranger
 
         ;; Owned Packages
         auto-dim-other-buffers
@@ -80,7 +80,6 @@
              ("C-<return>" . ivy-call)
              ("C-SPC"      . ivy-dispatching-done)
              ("C-S-SPC"    . ivy-dispatching-call)))
-
 ;;;; Magit
 
 (defun config/post-init-magit ()
